@@ -1,0 +1,48 @@
+name: tagged-release
+
+on:
+  push:
+    tags:
+      - '**'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v6
+
+      - name: validate gradle wrapper
+        uses: gradle/actions/wrapper-validation@v6
+
+      - name: setup jdk
+        uses: actions/setup-java@v5
+        with:
+          java-version: '21'
+          distribution: 'microsoft'
+
+      - name: make gradle wrapper executable
+        run: chmod +x ./gradlew
+
+      - name: build tagged release
+        run: ./gradlew clean build
+
+      - name: capture tagged build artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: tagged-build-${{ github.ref_name }}
+          path: build/libs/*.jar
+          if-no-files-found: error
+
+      - name: publish GitHub release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: build/libs/*.jar
+          allowUpdates: true
+          artifactErrorsFailBuild: true
+          generateReleaseNotes: true
+          replacesArtifacts: true
+          tag: ${{ github.ref_name }}

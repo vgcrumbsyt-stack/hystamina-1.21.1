@@ -491,9 +491,4 @@ object StaminaSystem {
 	private fun id(path: String): ResourceLocation {
 		return ResourceLocation.fromNamespaceAndPath(HyStamina.MOD_ID, path)
 	}
-
-	data class FoodRecoveryPreview(
-		val healthPoints: Double,
-		val durationSeconds: Double
-	)
 }
