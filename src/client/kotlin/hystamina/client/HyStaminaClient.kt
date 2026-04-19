@@ -66,11 +66,8 @@ object HyStaminaClient : ClientModInitializer {
 	private const val COMPASS_DEATH_RENDER_SIZE = 10
 	private const val COMPASS_DEATH_Y_OFFSET = -2
 	private const val COMPASS_DEATH_LABEL_TEXT = "Last Death"
-	private const val COMPASS_DEATH_LABEL_Y_GAP = 1
 	private const val COMPASS_DEATH_LABEL_COLOR = 0xFFFFD2D2.toInt()
-	private const val COMPASS_DEATH_DISTANCE_Y_GAP = 1
 	private const val COMPASS_DEATH_DISTANCE_SHOW_ANGLE = 8f
-	private const val COMPASS_DEATH_DISTANCE_COLOR = 0xFFFF9B9B.toInt()
 	private const val COMPASS_SPAWN_LABEL_TEXT = "Spawn"
 	private const val COMPASS_SPAWN_LABEL_COLOR = 0xFFF6E7B2.toInt()
 	private const val COMPASS_SPAWN_DISTANCE_SHOW_ANGLE = 8f
@@ -288,9 +285,9 @@ object HyStaminaClient : ClientModInitializer {
 			drawContext.pose().translate(0f, 0f, 100f)
 			renderCompassMapMarkers(drawContext, client, centerX, startY, player, playerYaw)
 			renderCompassSpawnMarker(drawContext, client, centerX, startY, player, playerYaw)
+			renderCompassPartyMarkers(drawContext, client, centerX, startY, player, playerYaw)
 			renderCompassFocusedInfo(drawContext, client, centerX, startY, player, playerYaw)
 			renderCompassDeathMarker(drawContext, client, centerX, startY, player, playerYaw)
-			renderCompassPartyMarkers(drawContext, client, centerX, startY, player, playerYaw)
 			drawContext.pose().popPose()
 			drawContext.flush()
 
@@ -421,6 +418,16 @@ object HyStaminaClient : ClientModInitializer {
 			)
 		}
 
+		val deathMarker = getCompassDeathMarker(centerX, player, playerYaw)
+		if (deathMarker != null && abs(deathMarker.delta) <= COMPASS_DEATH_DISTANCE_SHOW_ANGLE) {
+			infoLines += CompassFocusedInfoLine(
+				text = "$COMPASS_DEATH_LABEL_TEXT: ${formatCompassDistance(deathMarker.distanceBlocks)}",
+				color = COMPASS_DEATH_LABEL_COLOR,
+				alpha = compassAlphaForX(centerX, deathMarker.x),
+				distanceBlocks = deathMarker.distanceBlocks
+			)
+		}
+
 		for (waypoint in getHeldMapWaypoints(client, player, centerX, playerYaw)) {
 			if (abs(waypoint.delta) > COMPASS_MAP_INFO_SHOW_ANGLE) {
 				continue
@@ -467,30 +474,6 @@ object HyStaminaClient : ClientModInitializer {
 		val markerAlpha = compassAlphaForX(centerX, marker.x)
 		val markerY = startY + (COMPASS_HEIGHT - COMPASS_DEATH_RENDER_SIZE) / 2 + COMPASS_DEATH_Y_OFFSET
 		drawCompassDeathIcon(drawContext, marker.x, markerY, markerAlpha)
-
-		val deathLabelY = markerY + COMPASS_DEATH_RENDER_SIZE + COMPASS_DEATH_LABEL_Y_GAP
-		drawContext.drawString(
-			client.font,
-			COMPASS_DEATH_LABEL_TEXT,
-			marker.x - client.font.width(COMPASS_DEATH_LABEL_TEXT) / 2,
-			deathLabelY,
-			withAlpha(COMPASS_DEATH_LABEL_COLOR, markerAlpha),
-			true
-		)
-
-		if (abs(marker.delta) > COMPASS_DEATH_DISTANCE_SHOW_ANGLE) {
-			return
-		}
-
-		val distanceText = formatCompassDistance(marker.distanceBlocks)
-		drawContext.drawString(
-			client.font,
-			distanceText,
-			marker.x - client.font.width(distanceText) / 2,
-			deathLabelY + client.font.lineHeight + COMPASS_DEATH_DISTANCE_Y_GAP,
-			withAlpha(COMPASS_DEATH_DISTANCE_COLOR, markerAlpha),
-			true
-		)
 	}
 
 	private fun renderCompassMapMarkers(

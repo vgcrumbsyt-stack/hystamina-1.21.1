@@ -1,0 +1,68 @@
+# HyStamina
+
+HyStamina is a Hytale-inspired stamina overhaul for Fabric 1.21.1. It replaces Minecraft's default sprint-and-hunger flow with a dedicated stamina system, a custom HUD, and a compass built for navigation, recovery, and group play.
+
+## Features
+
+- Replaces hunger-driven sprinting with a dedicated stamina resource.
+- Adds a custom Hytale-style HUD for health, stamina, experience, and compass tracking.
+- Drains stamina while sprinting, with configurable recharge speed.
+- Optionally makes attacks and mining consume stamina.
+- Supports Hytale-style food healing instead of vanilla instant recovery.
+- Shows compass targets for spawn, last death location, named banner waypoints, and party members.
+- Automatically displays focused compass labels as a clean stacked list.
+- Includes optional Mod Menu integration for in-game configuration.
+
+## Requirements
+
+- Minecraft 1.21.1
+- Fabric Loader 0.19.2 or newer
+- Fabric API
+- Fabric Language Kotlin
+- Java 21 or newer
+
+## Multiplayer Notes
+
+- Install the mod on both the server and the client for the full stamina HUD and compass feature set.
+- Party tracking and synced compass targets are designed for multiplayer use.
+- Named banners are picked up as compass waypoints automatically.
+
+## Custom Compass Markers
+
+HyStamina lets each player save custom compass markers using named banners.
+
+1. Place a banner and give it a custom name.
+2. Sneak and right-click the named banner with your main hand.
+3. Confirm the prompt in chat to save it as a waypoint.
+
+Saved banner waypoints are player-specific and appear on the compass as custom markers with their banner name. To remove one, either sneak-right-click the same saved banner again or use the waypoint removal commands.
+
+Notes:
+
+- Only named banners can be saved as waypoints.
+- Waypoint names must be unique per player.
+- If a banner is renamed or removed, the saved waypoint will no longer validate.
+
+## Configuration
+
+HyStamina includes configurable settings for movement, stamina drain, stamina recharge, combat stamina costs, mining stamina costs, food healing behavior, and optional exhaustion penalties.
+
+If Mod Menu is installed, these settings can be adjusted in-game. Otherwise, the mod also supports a JSON config file.
+
+## Commands
+
+- `/waypoint` Shows your saved banner waypoints.
+- `/waypoint remove <banner name>` Removes a saved banner waypoint by name.
+- `/waypoint confirm` Confirms a pending waypoint add or remove action.
+- `/waypoint cancel` Cancels a pending waypoint add or remove action.
+- `/party` Shows your current party status or any pending invites.
+- `/party invite <player>` Invites a player to your party.
+- `/party accept <player>` Accepts a party invite from that player.
+- `/party decline <player>` Declines a party invite from that player.
+- `/party kick <player>` Kicks a player from your party. Party leader only.
+- `/party leave` Leaves your current party.
+- `/death clear` Clears your current death marker from the compass.
+
+## Summary
+
+HyStamina is built for players who want movement, combat, healing, and navigation to feel more deliberate. It keeps Minecraft familiar while adding a stronger adventure-game rhythm through stamina management and compass-driven awareness.

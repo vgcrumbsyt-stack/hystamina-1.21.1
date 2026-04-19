@@ -152,6 +152,10 @@ object HyStaminaNetworking {
 	}
 
 	private fun clearNearbyDeathMarker(player: net.minecraft.server.level.ServerPlayer) {
+		if (!player.isAlive) {
+			return
+		}
+
 		val deathLocation = player.lastDeathLocation.orElse(null) ?: return
 		if (deathLocation.dimension() != player.level().dimension()) {
 			return
