@@ -286,10 +286,15 @@ object HyStaminaClient : ClientModInitializer {
 
 			renderCompassTicks(drawContext, centerX, startY, playerYaw)
 			renderCompassLabels(drawContext, client, centerX, startY, playerYaw)
+			drawContext.flush()
+			drawContext.pose().pushPose()
+			drawContext.pose().translate(0f, 0f, 100f)
 			renderCompassMapMarkers(drawContext, client, centerX, startY, player, playerYaw)
 			renderCompassSpawnMarker(drawContext, client, centerX, startY, player, playerYaw)
 			renderCompassDeathMarker(drawContext, client, centerX, startY, player, playerYaw)
 			renderCompassPartyMarkers(drawContext, client, centerX, startY, player, playerYaw)
+			drawContext.pose().popPose()
+			drawContext.flush()
 
 			drawContext.blit(
 				COMPASS_POINTER_TEXTURE,
