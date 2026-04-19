@@ -13,6 +13,7 @@ object HyStamina : ModInitializer {
 	override fun onInitialize() {
 		HyStaminaConfig.load()
 		HyStaminaDeathCommands.initialize()
+		HyStaminaWaypointSystem.initialize()
 		HyStaminaPartySystem.initialize()
 		HyStaminaNetworking.initialize()
 		StaminaSystem.initialize()

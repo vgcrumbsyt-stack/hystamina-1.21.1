@@ -7,12 +7,15 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking
 import net.minecraft.core.BlockPos
 import net.minecraft.core.registries.BuiltInRegistries
 import net.minecraft.core.registries.Registries
+import net.minecraft.world.item.DyeColor
 import net.minecraft.network.RegistryFriendlyByteBuf
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload
 import net.minecraft.resources.ResourceKey
 import net.minecraft.resources.ResourceLocation
 import net.minecraft.world.level.Level
+import net.minecraft.world.level.block.entity.BannerPatternLayers
 import net.minecraft.world.item.MapItem
+import java.util.Locale
 import java.util.Optional
 import java.util.UUID
 
@@ -62,6 +65,10 @@ object HyStaminaNetworking {
 
 	fun refreshCompassDeathTarget(player: net.minecraft.server.level.ServerPlayer) {
 		syncCompassDeathTarget(player, force = true)
+	}
+
+	fun refreshCompassMapWaypoints(player: net.minecraft.server.level.ServerPlayer) {
+		syncCompassMapWaypoints(player, force = true)
 	}
 
 	private fun syncCompassSpawnTarget(player: net.minecraft.server.level.ServerPlayer, force: Boolean = false) {
@@ -165,6 +172,9 @@ object HyStaminaNetworking {
 
 	private fun getCompassMapWaypoints(player: net.minecraft.server.level.ServerPlayer): List<CompassMapWaypointData> {
 		val waypoints = linkedMapOf<String, CompassMapWaypointData>()
+		for (waypoint in HyStaminaWaypointSystem.getCompassBannerWaypoints(player)) {
+			putCompassWaypoint(waypoints, waypoint)
+		}
 		collectHeldMapWaypoints(player, player.mainHandItem, waypoints)
 		collectHeldMapWaypoints(player, player.offhandItem, waypoints)
 		return waypoints.values.sortedWith(
@@ -189,18 +199,31 @@ object HyStaminaNetworking {
 		for (banner in mapData.getBanners()) {
 			val name = banner.name().orElse(null)?.string ?: continue
 			val decorationTypeId = BuiltInRegistries.MAP_DECORATION_TYPE.getKey(banner.getDecoration().value()).toString()
-			val key = "${mapData.dimension.location()}|${banner.getId()}"
-			waypoints.putIfAbsent(
-				key,
-				CompassMapWaypointData(
-					dimensionId = mapData.dimension.location().toString(),
-					x = banner.pos().x,
-					z = banner.pos().z,
-					decorationTypeId = decorationTypeId,
-					name = name
-				)
+			val data = CompassMapWaypointData(
+				dimensionId = mapData.dimension.location().toString(),
+				x = banner.pos().x,
+				z = banner.pos().z,
+				decorationTypeId = decorationTypeId,
+				name = name,
+				bannerAppearance = HyStaminaWaypointSystem.getBannerAppearance(player.serverLevel(), banner.pos())
 			)
+			putCompassWaypoint(waypoints, data)
 		}
+	}
+
+	private fun putCompassWaypoint(
+		waypoints: MutableMap<String, CompassMapWaypointData>,
+		waypoint: CompassMapWaypointData
+	) {
+		val key = compassWaypointKey(waypoint)
+		val existingWaypoint = waypoints[key]
+		if (existingWaypoint == null || (existingWaypoint.bannerAppearance == null && waypoint.bannerAppearance != null)) {
+			waypoints[key] = waypoint
+		}
+	}
+
+	private fun compassWaypointKey(waypoint: CompassMapWaypointData): String {
+		return "${waypoint.dimensionId}|${waypoint.x}|${waypoint.z}|${waypoint.decorationTypeId}|${waypoint.name.lowercase(Locale.ROOT)}"
 	}
 
 	data class CompassSpawnData(
@@ -218,7 +241,13 @@ object HyStaminaNetworking {
 		val x: Int,
 		val z: Int,
 		val decorationTypeId: String,
-		val name: String
+		val name: String,
+		val bannerAppearance: BannerAppearanceData? = null
+	)
+
+	data class BannerAppearanceData(
+		val baseColor: DyeColor,
+		val patternLayers: BannerPatternLayers
 	)
 
 	data class CompassPartyMemberData(
@@ -466,6 +495,11 @@ object HyStaminaNetworking {
 						buffer.writeInt(waypoint.z)
 						buffer.writeUtf(waypoint.decorationTypeId)
 						buffer.writeUtf(waypoint.name)
+						buffer.writeBoolean(waypoint.bannerAppearance != null)
+						if (waypoint.bannerAppearance != null) {
+							DyeColor.STREAM_CODEC.encode(buffer, waypoint.bannerAppearance.baseColor)
+							BannerPatternLayers.STREAM_CODEC.encode(buffer, waypoint.bannerAppearance.patternLayers)
+						}
 					}
 				}
 
@@ -473,13 +507,27 @@ object HyStaminaNetworking {
 					val waypointCount = buffer.readInt()
 					val waypoints = ArrayList<CompassMapWaypointData>(waypointCount)
 					repeat(waypointCount) {
+						val dimensionId = buffer.readUtf()
+						val x = buffer.readInt()
+						val z = buffer.readInt()
+						val decorationTypeId = buffer.readUtf()
+						val name = buffer.readUtf()
+						val bannerAppearance = if (buffer.readBoolean()) {
+							BannerAppearanceData(
+								baseColor = DyeColor.STREAM_CODEC.decode(buffer),
+								patternLayers = BannerPatternLayers.STREAM_CODEC.decode(buffer)
+							)
+						} else {
+							null
+						}
 						waypoints.add(
 							CompassMapWaypointData(
-								dimensionId = buffer.readUtf(),
-								x = buffer.readInt(),
-								z = buffer.readInt(),
-								decorationTypeId = buffer.readUtf(),
-								name = buffer.readUtf()
+								dimensionId = dimensionId,
+								x = x,
+								z = z,
+								decorationTypeId = decorationTypeId,
+								name = name,
+								bannerAppearance = bannerAppearance
 							)
 						)
 					}

@@ -30,17 +30,29 @@ jobs:
       - name: build tagged release
         run: ./gradlew clean build
 
+      - name: prepare release bundle
+        run: |
+          mkdir -p build/release
+          final_jar=$(find build/libs -maxdepth 1 -type f -name '*.jar' ! -name '*-sources.jar' | head -n 1)
+          if [ -z "$final_jar" ]; then
+            echo "No final jar found in build/libs" >&2
+            exit 1
+          fi
+
+          cp "$final_jar" build/release/
+          git archive --format zip --output "build/release/hystamina-${{ github.ref_name }}-source.zip" HEAD
+
       - name: capture tagged build artifacts
         uses: actions/upload-artifact@v7
         with:
           name: tagged-build-${{ github.ref_name }}
-          path: build/libs/*.jar
+          path: build/release/*
           if-no-files-found: error
 
       - name: publish GitHub release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: build/libs/*.jar
+          artifacts: build/release/*
           allowUpdates: true
           artifactErrorsFailBuild: true
           generateReleaseNotes: true

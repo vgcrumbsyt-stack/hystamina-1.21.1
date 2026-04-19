@@ -7,7 +7,12 @@
 
 ## Tagged Backups
 
-Pushing a Git tag now triggers a release build on GitHub Actions. That workflow runs a clean Gradle build, stores the jars as workflow artifacts, and attaches the same jars to a GitHub Release for the tag.
+Pushing a Git tag now triggers a release build on GitHub Actions. That workflow runs a clean Gradle build, stores the release assets as workflow artifacts, and attaches the same files to a GitHub Release for the tag.
+
+Each tagged release includes:
+
+- the final remapped mod jar
+- a zipped source archive of the tagged repository
 
 Example:
 

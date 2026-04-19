@@ -16,6 +16,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback
 import net.minecraft.ChatFormatting
 import net.minecraft.client.Minecraft
 import net.minecraft.client.gui.components.PlayerFaceRenderer
+import net.minecraft.client.renderer.Sheets
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen
 import net.minecraft.client.resources.DefaultPlayerSkin
 import net.minecraft.core.component.DataComponents
@@ -77,6 +78,12 @@ object HyStaminaClient : ClientModInitializer {
 	private const val COMPASS_SPAWN_DISTANCE_SHOW_ANGLE = 8f
 	private const val COMPASS_SPAWN_DISTANCE_COLOR = 0xFFF6E7B2.toInt()
 	private const val COMPASS_MAP_MARKER_SIZE = 10
+	private const val COMPASS_PATTERNED_BANNER_WIDTH = 6
+	private const val COMPASS_PATTERNED_BANNER_HEIGHT = 12
+	private const val BANNER_PATTERN_FACE_U = 1
+	private const val BANNER_PATTERN_FACE_V = 1
+	private const val BANNER_PATTERN_FACE_WIDTH = 20
+	private const val BANNER_PATTERN_FACE_HEIGHT = 40
 	private const val COMPASS_MAP_MARKER_Y_OFFSET = -2
 	private const val COMPASS_MAP_INFO_SHOW_ANGLE = 10f
 	private const val COMPASS_MAP_INFO_TOP_OFFSET = COMPASS_HEIGHT + 6
@@ -503,6 +510,12 @@ object HyStaminaClient : ClientModInitializer {
 		startY: Int,
 		alpha: Float
 	) {
+		val bannerAppearance = waypoint.bannerAppearance
+		if (bannerAppearance != null) {
+			renderCompassBannerWaypointIcon(drawContext, bannerAppearance, waypoint.x, startY, alpha)
+			return
+		}
+
 		val sprite = client.mapDecorationTextures.get(waypoint.decoration)
 		drawContext.blit(
 			waypoint.x - COMPASS_MAP_MARKER_SIZE / 2,
@@ -569,7 +582,8 @@ object HyStaminaClient : ClientModInitializer {
 					name = Component.literal(waypoint.name),
 					x = x,
 					delta = delta,
-					distanceBlocks = distanceBlocks
+					distanceBlocks = distanceBlocks,
+					bannerAppearance = waypoint.bannerAppearance
 				)
 			)
 		}
@@ -1031,13 +1045,84 @@ object HyStaminaClient : ClientModInitializer {
 		return ResourceLocation.fromNamespaceAndPath(HyStamina.MOD_ID, "textures/$path.png")
 	}
 
+	private fun renderCompassBannerWaypointIcon(
+		drawContext: net.minecraft.client.gui.GuiGraphics,
+		appearance: HyStaminaNetworking.BannerAppearanceData,
+		centerX: Int,
+		startY: Int,
+		alpha: Float
+	) {
+		val bannerX = centerX - COMPASS_PATTERNED_BANNER_WIDTH / 2
+		val bannerY = startY - (COMPASS_PATTERNED_BANNER_HEIGHT - COMPASS_MAP_MARKER_SIZE) / 2
+
+		drawBannerFaceLayer(
+			drawContext,
+			Sheets.BANNER_BASE.sprite(),
+			bannerX,
+			bannerY,
+			COMPASS_PATTERNED_BANNER_WIDTH,
+			COMPASS_PATTERNED_BANNER_HEIGHT,
+			appearance.baseColor.getTextureDiffuseColor(),
+			alpha
+		)
+
+		for (layer in appearance.patternLayers.layers()) {
+			drawBannerFaceLayer(
+				drawContext,
+				Sheets.getBannerMaterial(layer.pattern()).sprite(),
+				bannerX,
+				bannerY,
+				COMPASS_PATTERNED_BANNER_WIDTH,
+				COMPASS_PATTERNED_BANNER_HEIGHT,
+				layer.color().getTextureDiffuseColor(),
+				alpha
+			)
+		}
+	}
+
+	private fun drawBannerFaceLayer(
+		drawContext: net.minecraft.client.gui.GuiGraphics,
+		sprite: net.minecraft.client.renderer.texture.TextureAtlasSprite,
+		x: Int,
+		y: Int,
+		width: Int,
+		height: Int,
+		rgbColor: Int,
+		alpha: Float
+	) {
+		val atlasWidth = (sprite.contents().width() / (sprite.getU1() - sprite.getU0())).roundToInt()
+		val atlasHeight = (sprite.contents().height() / (sprite.getV1() - sprite.getV0())).roundToInt()
+		val atlasU = sprite.getX() + BANNER_PATTERN_FACE_U
+		val atlasV = sprite.getY() + BANNER_PATTERN_FACE_V
+		val red = (rgbColor shr 16 and 0xFF) / 255f
+		val green = (rgbColor shr 8 and 0xFF) / 255f
+		val blue = (rgbColor and 0xFF) / 255f
+
+		drawContext.setColor(red, green, blue, alpha)
+		drawContext.blit(
+			sprite.atlasLocation(),
+			x,
+			y,
+			width,
+			height,
+			atlasU.toFloat(),
+			atlasV.toFloat(),
+			BANNER_PATTERN_FACE_WIDTH,
+			BANNER_PATTERN_FACE_HEIGHT,
+			atlasWidth,
+			atlasHeight
+		)
+		drawContext.setColor(1f, 1f, 1f, 1f)
+	}
+
 	private data class CompassLabel(val bearing: Int, val text: String)
 	private data class CompassMapWaypoint(
 		val decoration: net.minecraft.world.level.saveddata.maps.MapDecoration,
 		val name: Component,
 		val x: Int,
 		val delta: Float,
-		val distanceBlocks: Double
+		val distanceBlocks: Double,
+		val bannerAppearance: HyStaminaNetworking.BannerAppearanceData? = null
 	)
 	private data class CompassPartyMember(
 		val uuid: UUID,
