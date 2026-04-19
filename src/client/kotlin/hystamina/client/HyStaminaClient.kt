@@ -1,4 +1,4 @@
-
+﻿
 package hystamina.client
 
 import com.mojang.blaze3d.systems.RenderSystem
@@ -402,6 +402,10 @@ object HyStaminaClient : ClientModInitializer {
 		val markerY = startY + (COMPASS_HEIGHT - COMPASS_SPAWN_RENDER_HEIGHT) / 2 + COMPASS_SPAWN_Y_OFFSET
 		drawCompassSpawnIcon(drawContext, marker.x, markerY, markerAlpha)
 
+		if (abs(marker.delta) > COMPASS_SPAWN_DISTANCE_SHOW_ANGLE) {
+			return
+		}
+
 		val spawnLabelY = markerY + COMPASS_SPAWN_RENDER_HEIGHT + COMPASS_SPAWN_LABEL_Y_GAP
 		drawContext.drawString(
 			client.font,
@@ -411,10 +415,6 @@ object HyStaminaClient : ClientModInitializer {
 			withAlpha(COMPASS_SPAWN_LABEL_COLOR, markerAlpha),
 			true
 		)
-
-		if (abs(marker.delta) > COMPASS_SPAWN_DISTANCE_SHOW_ANGLE) {
-			return
-		}
 
 		val distanceText = formatCompassDistance(marker.distanceBlocks)
 		drawContext.drawString(
