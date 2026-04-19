@@ -1,0 +1,57 @@
+{
+	"schemaVersion": 1,
+	"id": "hystamina",
+	"version": "${version}",
+	"name": "HyStamina",
+	"description": "A Hytale-inspired stamina overhaul.",
+	"authors": [
+		"VGCrumbs"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/hystamina/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			{
+				"value": "hystamina.HyStamina",
+				"adapter": "kotlin"
+			}
+		],
+		"client": [
+			{
+				"value": "hystamina.client.HyStaminaClient",
+				"adapter": "kotlin"
+			}
+		],
+		"modmenu": [
+			{
+				"value": "hystamina.client.HyStaminaModMenuIntegration",
+				"adapter": "kotlin"
+			}
+		],
+		"fabric-datagen": [
+			{
+				"value": "hystamina.client.HyStaminaDataGenerator",
+				"adapter": "kotlin"
+			}
+		]
+	},
+	"mixins": [
+		"hystamina.mixins.json",
+		{
+			"config": "hystamina.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.19.2",
+		"minecraft": "~1.21.1",
+		"java": ">=21",
+		"fabric-api": "*",
+		"fabric-language-kotlin": "*"
+	}
+}

@@ -1,0 +1,17 @@
+{
+	"required": true,
+	"package": "hystamina.mixin",
+	"compatibilityLevel": "JAVA_21",
+	"mixins": [
+		"CakeBlockMixin",
+		"FoodDataMixin",
+		"LivingEntityMixin",
+		"PlayerMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}
